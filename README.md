@@ -7,8 +7,8 @@ in UI using JOGL(Java OpenGL) library. Import the following jars in library for 
 2.jogl-all-natives-windows-amd64.jar
 3.gluegen-rt-natives-windows-amd64.jar
 4.gluegen-rt.jar
-5.gson-2.2.2.jar
-5.postgresql-42.1.1.jar
+5.gson-2.2.2.jar5
+6.postgresql-42.1.1.jar
 
 Run the MainApp file and select details from dropdown menus. Click press to get Output. The database need to setup in vehicle.java and
 item.java file. For database, run createItemsTable.sql file for postgreSQL.
