@@ -2,14 +2,18 @@ package logic;
 
 import comparators.ZYXComparator;
 import comparators.OrderIdComparator;
+import comparators.XZYComparator;
+import comparators.YZXComparator;
 import java.util.*;
 
 public class PackingAlgorithm {
     public ArrayList<Point> list,midPoints;
     public ArrayList<Rectangle> fragileRects,topFaces;
-    ArrayList<Cuboid> fitCuboids;
+    ArrayList<Cuboid> fitCuboids,fragileCuboids;
+    ArrayList<Rectangle> backfaces;
     public Cuboid bin;
     public double capacity;
+    public long idCounter=1;
     public void addAllPoints(Cuboid c){
         Point midPoint=new Point((c.topLeftRear.x+c.topRightRear.x)/2,c.topLeftRear.y,(c.topLeftRear.z+c.topLeftFront.z)/2);
         midPoints.add(midPoint);
@@ -28,176 +32,185 @@ public class PackingAlgorithm {
         }else {
             fragileRects.add(new Rectangle(new Point2D(c.topLeftRear.x,c.topLeftRear.z),c.length,c.breadth));
             //c.color=new float[]{0f,1f,0f};
+            fragileCuboids.add(c);
         }
-        Iterator<Point> listIterator=list.iterator();
-        while(listIterator.hasNext()){
-            Point p=listIterator.next();
-            if(p.z<c.bottomLeftRear.z && p.x>=c.bottomLeftRear.x && p.x<c.bottomRightRear.x && p.y>=c.bottomLeftRear.y && p.y<c.topLeftRear.y){
-                listIterator.remove();
-            }
-        }
-        //Collections.sort(list,new YZXComparator());
-        //Collections.sort(list,new XZYComparator());
-        Collections.sort(list,new ZYXComparator());
-    }
-    public ArrayList<Cuboid> fitCuboids(double length,double breadth,double height,double weight,ArrayList<Cuboid> cuboids){
-        Collections.sort(cuboids,new OrderIdComparator());
-        capacity=weight;
-        midPoints=new ArrayList<Point>();
-        fragileRects=new ArrayList<Rectangle>();
-        topFaces=new ArrayList<Rectangle>();
-        fitCuboids=new ArrayList<Cuboid>();
-        bin=new Cuboid(length, breadth, height, weight);
-        Cuboid c=cuboids.get(0);
-//        c.setBottomLeftRear(new Point(0.0, 0.0, 0.0));
-//        System.out.println("1st Cuboid "+c);
-//        if (!c.thisSideUp) {
-//            if (c.height > c.length || c.height > c.breadth) {
-//                double SALB=c.length*c.breadth,SABH=c.height*c.breadth,SALH=c.length*c.height;
-//                if(SABH>SALB && SABH>SALH){
-//                    c.rotateLengthHeight();
-//                }else if(SALH>SABH && SALH>SALB){
-//                    c.rotateHeightBreadth();
-//                }
-//            }
-//        }
-        c.setBottomLeftRear(new Point(0.0, 0.0, 0.0));
-        System.out.println(c);
-        fitCuboids.add(c);
-//        System.out.println("FIT:-"+fitCuboids);
-        list=new ArrayList<Point>();
-        for(double x=c.bottomRightRear.x;x<=length;x++)
-            list.add(new Point(x,0.0,0.0));
-        for(double z=c.bottomLeftFront.z;z<=breadth;z++)
-            list.add(new Point(0.0,0.0,z));
-        addAllPoints(c);                                
-//        fitCuboids.add(c);
-        for(int i=1;i<cuboids.size();i++) {
-            c = cuboids.get(i);
-            if (capacity >= capacity - c.weight) {
-                if (!c.thisSideUp) {
-                    if (c.height > c.length || c.height > c.breadth) {
-                        double SALB=c.length*c.breadth,SABH=c.height*c.breadth,SALH=c.length*c.height;
-                        if(SABH>SALB && SABH>SALH){
-                            c.rotateLengthHeight();
-                        }else if(SALH>SABH && SALH>SALB){
-                            c.rotateHeightBreadth();
-                        }
+        if(idCounter!=c.id){
+            for(Cuboid c1:fitCuboids){
+                Iterator<Point> listIterator=list.iterator();
+                while(listIterator.hasNext()){
+                    Point p=listIterator.next();
+                    if(p.z<=c1.bottomLeftRear.z && p.x>=c1.bottomLeftRear.x && p.x<c1.bottomRightRear.x && p.y>=c1.bottomLeftRear.y && p.y<c1.topLeftRear.y){
+                        listIterator.remove();
                     }
                 }
-                for (int j = 0; j < list.size(); j++) {
-                    Point p = list.get(j);
-                    c.setBottomLeftRear(p);
-                    Rectangle bottomFace = new Rectangle(new Point2D(c.bottomLeftRear.x, c.bottomLeftRear.z), c.length, c.breadth);
-                    if (!bottomFace.intersects(fragileRects)) {
-                        if (c.bottomLeftRear.y > 0.0) {
-                            
-//                            System.out.println(p + " " + c.contains1(fitCuboids) + " " + c.containsAllCornerPoints(fitCuboids) + " " + !c.intersects(fitCuboids));
-                            if (c.contains1(fitCuboids) && c.containsAllCornerPoints(fitCuboids) && !c.intersects(fitCuboids) && p.x + c.length <= length && p.x + c.length >= 0 && p.y + c.height <= height && p.y + c.height >= 0 && p.z + c.breadth <= breadth && p.z + c.breadth >= 0) {
-                                fitCuboids.add(c);
-                                addAllPoints(c);
-                                capacity=capacity-c.weight;
-//                                System.out.println("Cuboid:- "+c+" Point:-"+p);
-                                break;
-                            } else{
-                                c.reset();
-                                c.rotateLengthBreadth();
-                                c.setBottomLeftRear(p);
-                                if (c.contains1(fitCuboids) && c.containsAllCornerPoints(fitCuboids) && !c.intersects(fitCuboids) && p.x + c.length <= length && p.x + c.length >= 0 && p.y + c.height <= height && p.y + c.height >= 0 && p.z + c.breadth <= breadth && p.z + c.breadth >= 0) {
-                                    fitCuboids.add(c);
-                                    addAllPoints(c);
-                                    capacity=capacity-c.weight;
-//                                    System.out.println("Cuboid:- "+c+" Point:-"+p);
-                                    break;
-                                }else
-                                {
-                                    c.reset();
-                                    c.rotateLengthBreadth();
-                                    c.rotateLengthHeight();
-                                    c.setBottomLeftRear(p);
-                                    if (c.contains1(fitCuboids) && c.containsAllCornerPoints(fitCuboids) && !c.intersects(fitCuboids) && p.x + c.length <= length && p.x + c.length >= 0 && p.y + c.height <= height && p.y + c.height >= 0 && p.z + c.breadth <= breadth && p.z + c.breadth >= 0) {
-                                        fitCuboids.add(c);
-                                        addAllPoints(c);
-                                        capacity=capacity-c.weight;
-//                                    System.out.println("Cuboid:- "+c+" Point:-"+p);
-                                        break;
-                                    }else
-                                    {
-                                        c.reset();
-                                        c.rotateLengthHeight();
-                                        c.rotateHeightBreadth();
-                                        c.setBottomLeftRear(p);
-                                        if (c.contains1(fitCuboids) && c.containsAllCornerPoints(fitCuboids) && !c.intersects(fitCuboids) && p.x + c.length <= length && p.x + c.length >= 0 && p.y + c.height <= height && p.y + c.height >= 0 && p.z + c.breadth <= breadth && p.z + c.breadth >= 0) {
-                                            fitCuboids.add(c);
-                                            addAllPoints(c);
-                                            capacity=capacity-c.weight;
-//                                    System.out.println("Cuboid:- "+c+" Point:-"+p);
-                                            break;
-                                        }
-                                    }
-                                }
-                            }
-                        } else {
-                            if (!c.intersects(fitCuboids) && p.x + c.length <= length && p.x + c.length >= 0 && p.y + c.height <= height && p.y + c.height >= 0 && p.z + c.breadth <= breadth && p.z + c.breadth >= 0) {
-                                fitCuboids.add(c);
-                                addAllPoints(c);
-                                capacity=capacity-c.weight;
-//                                System.out.println("Cuboid:- "+c+" Point:-"+p);
-                                break;
-                            } else {
-                                c.reset();
-                                c.rotateLengthBreadth();
-                                c.setBottomLeftRear(p);
-                                if (!c.intersects(fitCuboids) && p.x + c.length <= length && p.x + c.length >= 0 && p.y + c.height <= height && p.y + c.height >= 0 && p.z + c.breadth <= breadth && p.z + c.breadth >= 0) {
-                                    fitCuboids.add(c);
-                                    addAllPoints(c);
-                                    capacity=capacity-c.weight;
-//                                    System.out.println("Cuboid:- "+c+" Point:-"+p);
-                                    break;
-                                }else
-                                {
-                                    c.reset();
-                                    c.rotateLengthBreadth();
-                                    c.rotateHeightBreadth();
-                                    c.setBottomLeftRear(p);
-                                    if (!c.intersects(fitCuboids) && p.x + c.length <= length && p.x + c.length >= 0 && p.y + c.height <= height && p.y + c.height >= 0 && p.z + c.breadth <= breadth && p.z + c.breadth >= 0) {
-                                        fitCuboids.add(c);
-                                        addAllPoints(c);
-                                        capacity=capacity-c.weight;
-    //                                    System.out.println("Cuboid:- "+c+" Point:-"+p);
-                                        break;
-                                    }else
-                                    {
-                                        c.reset();
-                                    c.rotateHeightBreadth();
-                                    c.rotateLengthHeight();
-                                    c.setBottomLeftRear(p);
-                                    if (!c.intersects(fitCuboids) && p.x + c.length <= length && p.x + c.length >= 0 && p.y + c.height <= height && p.y + c.height >= 0 && p.z + c.breadth <= breadth && p.z + c.breadth >= 0) {
-                                        fitCuboids.add(c);
-                                        addAllPoints(c);
-                                        capacity=capacity-c.weight;
-//                                      System.out.println("Cuboid:- "+c+" Point:-"+p);
-                                        break;
-                                }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-
             }
-
+            idCounter=c.id;
         }
         
-        ArrayList<Cuboid> fitCuboids1=new ArrayList<>();
-        c=new Cuboid(length,breadth,height,weight);
-        c.setBottomLeftRear(new Point(0.0,0.0,0.0));
-        fitCuboids1.add(c);
-        fitCuboids1.addAll(fitCuboids);
-//        System.out.println(fitCuboids);
-        return fitCuboids1;
+        Rectangle backface=new Rectangle(new Point2D(c.topLeftRear.x,c.topLeftRear.y),c.length,c.height);
+        backfaces.add(backface);
+//        Collections.sort(list,new YZXComparator());
+//        Collections.sort(list,new XZYComparator());
+        Collections.sort(list,new ZYXComparator());
     }
+//    public ArrayList<Cuboid> fitCuboids(double length,double breadth,double height,double weight,ArrayList<Cuboid> cuboids){
+//        Collections.sort(cuboids,new OrderIdComparator());
+//        capacity=weight;
+//        midPoints=new ArrayList<Point>();
+//        fragileRects=new ArrayList<Rectangle>();
+//        topFaces=new ArrayList<Rectangle>();
+//        fitCuboids=new ArrayList<Cuboid>();
+//        fragileCuboids=new ArrayList<Cuboid>();
+//        bin=new Cuboid(length, breadth, height, weight);
+//        Cuboid c=cuboids.get(0);
+////        c.setBottomLeftRear(new Point(0.0, 0.0, 0.0));
+////        System.out.println("1st Cuboid "+c);
+////        if (!c.thisSideUp) {
+////            if (c.height > c.length || c.height > c.breadth) {
+////                double SALB=c.length*c.breadth,SABH=c.height*c.breadth,SALH=c.length*c.height;
+////                if(SABH>SALB && SABH>SALH){
+////                    c.rotateLengthHeight();
+////                }else if(SALH>SABH && SALH>SALB){
+////                    c.rotateHeightBreadth();
+////                }
+////            }
+////        }
+//        c.setBottomLeftRear(new Point(0.0, 0.0, 0.0));
+//        System.out.println(c);
+//        fitCuboids.add(c);
+////        System.out.println("FIT:-"+fitCuboids);
+//        list=new ArrayList<Point>();
+//        for(double x=c.bottomRightRear.x;x<=length;x++)
+//            list.add(new Point(x,0.0,0.0));
+//        for(double z=c.bottomLeftFront.z;z<=breadth;z++)
+//            list.add(new Point(0.0,0.0,z));
+//        addAllPoints(c);                                
+////        fitCuboids.add(c);
+//        for(int i=1;i<cuboids.size();i++) {
+//            c = cuboids.get(i);
+//            if (capacity >= capacity - c.weight) {
+//                if (!c.thisSideUp) {
+//                    if (c.height > c.length || c.height > c.breadth) {
+//                        double SALB=c.length*c.breadth,SABH=c.height*c.breadth,SALH=c.length*c.height;
+//                        if(SABH>SALB && SABH>SALH){
+//                            c.rotateLengthHeight();
+//                        }else if(SALH>SABH && SALH>SALB){
+//                            c.rotateHeightBreadth();
+//                        }
+//                    }
+//                }
+//                for (int j = 0; j < list.size(); j++) {
+//                    Point p = list.get(j);
+//                    c.setBottomLeftRear(p);
+//                    Rectangle bottomFace = new Rectangle(new Point2D(c.bottomLeftRear.x, c.bottomLeftRear.z), c.length, c.breadth);
+//                    if (!/*bottomFace.intersects(fragileRects)*/c.intersectsFragile(fitCuboids)) {
+//                        if (c.bottomLeftRear.y > 0.0) {
+////                            System.out.println(p + " " + c.contains1(fitCuboids) + " " + c.containsAllCornerPoints(fitCuboids) + " " + !c.intersects(fitCuboids));
+//                            if (c.contains1(fitCuboids) && c.containsAllCornerPoints(fitCuboids) && !c.intersects(fitCuboids) && p.x + c.length <= length && p.x + c.length >= 0 && p.y + c.height <= height && p.y + c.height >= 0 && p.z + c.breadth <= breadth && p.z + c.breadth >= 0) {
+//                                fitCuboids.add(c);
+//                                addAllPoints(c);
+//                                capacity=capacity-c.weight;
+////                                System.out.println("Cuboid:- "+c+" Point:-"+p);
+//                                break;
+//                            } else{
+//                                c.reset();
+//                                c.rotateLengthBreadth();
+//                                c.setBottomLeftRear(p);
+//                                if (c.contains1(fitCuboids) && c.containsAllCornerPoints(fitCuboids) && !c.intersects(fitCuboids) && p.x + c.length <= length && p.x + c.length >= 0 && p.y + c.height <= height && p.y + c.height >= 0 && p.z + c.breadth <= breadth && p.z + c.breadth >= 0) {
+//                                    fitCuboids.add(c);
+//                                    addAllPoints(c);
+//                                    capacity=capacity-c.weight;
+////                                    System.out.println("Cuboid:- "+c+" Point:-"+p);
+//                                    break;
+//                                }else
+//                                {
+//                                    c.reset();
+//                                    c.rotateLengthBreadth();
+//                                    c.rotateLengthHeight();
+//                                    c.setBottomLeftRear(p);
+//                                    if (c.contains1(fitCuboids) && c.containsAllCornerPoints(fitCuboids) && !c.intersects(fitCuboids) && p.x + c.length <= length && p.x + c.length >= 0 && p.y + c.height <= height && p.y + c.height >= 0 && p.z + c.breadth <= breadth && p.z + c.breadth >= 0) {
+//                                        fitCuboids.add(c);
+//                                        addAllPoints(c);
+//                                        capacity=capacity-c.weight;
+////                                    System.out.println("Cuboid:- "+c+" Point:-"+p);
+//                                        break;
+//                                    }else
+//                                    {
+//                                        c.reset();
+//                                        c.rotateLengthHeight();
+//                                        c.rotateHeightBreadth();
+//                                        c.setBottomLeftRear(p);
+//                                        if (c.contains1(fitCuboids) && c.containsAllCornerPoints(fitCuboids) && !c.intersects(fitCuboids) && p.x + c.length <= length && p.x + c.length >= 0 && p.y + c.height <= height && p.y + c.height >= 0 && p.z + c.breadth <= breadth && p.z + c.breadth >= 0) {
+//                                            fitCuboids.add(c);
+//                                            addAllPoints(c);
+//                                            capacity=capacity-c.weight;
+////                                    System.out.println("Cuboid:- "+c+" Point:-"+p);
+//                                            break;
+//                                        }
+//                                    }
+//                                }
+//                            }
+//                        } else {
+//                            if (!c.intersects(fitCuboids) && p.x + c.length <= length && p.x + c.length >= 0 && p.y + c.height <= height && p.y + c.height >= 0 && p.z + c.breadth <= breadth && p.z + c.breadth >= 0) {
+//                                fitCuboids.add(c);
+//                                addAllPoints(c);
+//                                capacity=capacity-c.weight;
+////                                System.out.println("Cuboid:- "+c+" Point:-"+p);
+//                                break;
+//                            } else {
+//                                c.reset();
+//                                c.rotateLengthBreadth();
+//                                c.setBottomLeftRear(p);
+//                                if (!c.intersects(fitCuboids) && p.x + c.length <= length && p.x + c.length >= 0 && p.y + c.height <= height && p.y + c.height >= 0 && p.z + c.breadth <= breadth && p.z + c.breadth >= 0) {
+//                                    fitCuboids.add(c);
+//                                    addAllPoints(c);
+//                                    capacity=capacity-c.weight;
+////                                    System.out.println("Cuboid:- "+c+" Point:-"+p);
+//                                    break;
+//                                }else
+//                                {
+//                                    c.reset();
+//                                    c.rotateLengthBreadth();
+//                                    c.rotateHeightBreadth();
+//                                    c.setBottomLeftRear(p);
+//                                    if (!c.intersects(fitCuboids) && p.x + c.length <= length && p.x + c.length >= 0 && p.y + c.height <= height && p.y + c.height >= 0 && p.z + c.breadth <= breadth && p.z + c.breadth >= 0) {
+//                                        fitCuboids.add(c);
+//                                        addAllPoints(c);
+//                                        capacity=capacity-c.weight;
+//    //                                    System.out.println("Cuboid:- "+c+" Point:-"+p);
+//                                        break;
+//                                    }else
+//                                    {
+//                                        c.reset();
+//                                    c.rotateHeightBreadth();
+//                                    c.rotateLengthHeight();
+//                                    c.setBottomLeftRear(p);
+//                                    if (!c.intersects(fitCuboids) && p.x + c.length <= length && p.x + c.length >= 0 && p.y + c.height <= height && p.y + c.height >= 0 && p.z + c.breadth <= breadth && p.z + c.breadth >= 0) {
+//                                        fitCuboids.add(c);
+//                                        addAllPoints(c);
+//                                        capacity=capacity-c.weight;
+////                                      System.out.println("Cuboid:- "+c+" Point:-"+p);
+//                                        break;
+//                                }
+//                                    }
+//                                }
+//                            }
+//                        }
+//                    }
+//                }
+//
+//            }
+//
+//        }
+//        
+//        ArrayList<Cuboid> fitCuboids1=new ArrayList<>();
+//        c=new Cuboid(length,breadth,height,weight);
+//        c.setBottomLeftRear(new Point(0.0,0.0,0.0));
+//        fitCuboids1.add(c);
+//        fitCuboids1.addAll(fitCuboids);
+////        System.out.println(fitCuboids);
+//        return fitCuboids1;
+//    }
     
     public ArrayList<Cuboid> fitCuboids(Cuboid bin,ArrayList<Cuboid> cuboids){
         this.bin=new Cuboid(bin);
@@ -207,7 +220,9 @@ public class PackingAlgorithm {
         topFaces=new ArrayList<>();
         fitCuboids=new ArrayList<>();
         list=new ArrayList<>();
+        fragileCuboids=new ArrayList<Cuboid>();
         int count=0;
+        backfaces=new ArrayList<>();
         //Check all the conditions for the first cuboid to be placed
         while(fitCuboids.isEmpty() && count<cuboids.size()){
             Cuboid c=cuboids.get(count++);
@@ -311,6 +326,7 @@ public class PackingAlgorithm {
     }
     
     public Cuboid orientation(Cuboid c){
+        Rectangle frontface;
         ArrayList<Cuboid> cuboids=new ArrayList<>();
         boolean flag1=true,flag2=true,flag3=true,flag4=true,flag5=true,flag6=true;
         for (int j = 0; j < list.size(); j++) {
@@ -320,23 +336,26 @@ public class PackingAlgorithm {
             Cuboid c1=new Cuboid(c);
             c1.setBottomLeftRear(p);
             Rectangle bottomFace = new Rectangle(new Point2D(c1.bottomLeftRear.x, c1.bottomLeftRear.z), c1.length, c1.breadth);
-            if (!bottomFace.intersects(fragileRects)) {
+            if (/*!bottomFace.intersects(fragileRects)*/!c1.intersectsFragile(fragileCuboids) /*&& !c1.orderSort(fitCuboids)*/) {
                 if ( c1.bottomLeftRear.y > 0.0){ 
-                    if (flag1 && c1.contains1(fitCuboids) && c1.containsAllCornerPoints(fitCuboids) && !c1.intersects(fitCuboids) && p.x + c1.length <= bin.length && p.x + c1.length >= 0 && p.y + c1.height <= bin.height && p.y + c1.height >= 0 && p.z + c1.breadth <= bin.breadth && p.z + c1.breadth >= 0) {
+                    frontface=c1.getFrontFace();
+                    if (frontface.intersects(backfaces) && flag1 && c1.contains1(fitCuboids) && c1.containsAllCornerPoints(fitCuboids) && !c1.intersects(fitCuboids) && p.x + c1.length <= bin.length && p.x + c1.length >= 0 && p.y + c1.height <= bin.height && p.y + c1.height >= 0 && p.z + c1.breadth <= bin.breadth && p.z + c1.breadth >= 0) {
                         cuboids.add(c1);
                         flag1=false;
                     } 
                     c1=new Cuboid(c);
                     c1.rotateLengthBreadth();
                     c1.setBottomLeftRear(p);
-                    if (flag2 && c1.contains1(fitCuboids) && c1.containsAllCornerPoints(fitCuboids) && !c1.intersects(fitCuboids) && p.x + c1.length <= bin.length && p.x + c1.length >= 0 && p.y + c1.height <= bin.height && p.y + c1.height >= 0 && p.z + c1.breadth <= bin.breadth && p.z + c1.breadth >= 0) {                        cuboids.add(c1);
+                    frontface=c1.getFrontFace();
+                    if (frontface.intersects(backfaces) && flag2 && c1.contains1(fitCuboids) && c1.containsAllCornerPoints(fitCuboids) && !c1.intersects(fitCuboids) && p.x + c1.length <= bin.length && p.x + c1.length >= 0 && p.y + c1.height <= bin.height && p.y + c1.height >= 0 && p.z + c1.breadth <= bin.breadth && p.z + c1.breadth >= 0) {                        cuboids.add(c1);
                         cuboids.add(c1);
                         flag2=false;
                     }
                     c1=new Cuboid(c);
                     c1.rotateLengthHeight();
                     c1.setBottomLeftRear(p);
-                    if (flag3 && c1.contains1(fitCuboids) && c1.containsAllCornerPoints(fitCuboids) && !c1.intersects(fitCuboids) && p.x + c1.length <= bin.length && p.x + c1.length >= 0 && p.y + c1.height <= bin.height && p.y + c1.height >= 0 && p.z + c1.breadth <= bin.breadth && p.z + c1.breadth >= 0) {                        cuboids.add(c1);
+                    frontface=c1.getFrontFace();
+                    if (frontface.intersects(backfaces) && flag3 && c1.contains1(fitCuboids) && c1.containsAllCornerPoints(fitCuboids) && !c1.intersects(fitCuboids) && p.x + c1.length <= bin.length && p.x + c1.length >= 0 && p.y + c1.height <= bin.height && p.y + c1.height >= 0 && p.z + c1.breadth <= bin.breadth && p.z + c1.breadth >= 0) {                        cuboids.add(c1);
                         cuboids.add(c1);
                         flag3=false;
                     }
@@ -344,7 +363,8 @@ public class PackingAlgorithm {
                     c1.rotateLengthHeight();
                     c1.rotateLengthBreadth();
                     c1.setBottomLeftRear(p);
-                    if (flag4 && c1.contains1(fitCuboids) && c1.containsAllCornerPoints(fitCuboids) && !c1.intersects(fitCuboids) && p.x + c1.length <= bin.length && p.x + c1.length >= 0 && p.y + c1.height <= bin.height && p.y + c1.height >= 0 && p.z + c1.breadth <= bin.breadth && p.z + c1.breadth >= 0) {                        cuboids.add(c1);
+                    frontface=c1.getFrontFace();
+                    if (frontface.intersects(backfaces) && flag4 && c1.contains1(fitCuboids) && c1.containsAllCornerPoints(fitCuboids) && !c1.intersects(fitCuboids) && p.x + c1.length <= bin.length && p.x + c1.length >= 0 && p.y + c1.height <= bin.height && p.y + c1.height >= 0 && p.z + c1.breadth <= bin.breadth && p.z + c1.breadth >= 0) {                        cuboids.add(c1);
                         cuboids.add(c1);
                         flag4=false;
                     }
@@ -352,33 +372,38 @@ public class PackingAlgorithm {
                     c1.rotateHeightBreadth();
                     c1.rotateLengthBreadth();
                     c1.setBottomLeftRear(p);
-                    if (flag5 && c1.contains1(fitCuboids) && c1.containsAllCornerPoints(fitCuboids) && !c1.intersects(fitCuboids) && p.x + c1.length <= bin.length && p.x + c1.length >= 0 && p.y + c1.height <= bin.height && p.y + c1.height >= 0 && p.z + c1.breadth <= bin.breadth && p.z + c1.breadth >= 0) {                        cuboids.add(c1);
+                    frontface=c1.getFrontFace();
+                    if (frontface.intersects(backfaces) && flag5 && c1.contains1(fitCuboids) && c1.containsAllCornerPoints(fitCuboids) && !c1.intersects(fitCuboids) && p.x + c1.length <= bin.length && p.x + c1.length >= 0 && p.y + c1.height <= bin.height && p.y + c1.height >= 0 && p.z + c1.breadth <= bin.breadth && p.z + c1.breadth >= 0) {                        cuboids.add(c1);
                         cuboids.add(c1);
                         flag5=false;
                     }
                     c1=new Cuboid(c);
                     c1.rotateHeightBreadth();
                     c1.setBottomLeftRear(p);
-                    if (flag6 && c1.contains1(fitCuboids) && c1.containsAllCornerPoints(fitCuboids) && !c1.intersects(fitCuboids) && p.x + c1.length <= bin.length && p.x + c1.length >= 0 && p.y + c1.height <= bin.height && p.y + c1.height >= 0 && p.z + c1.breadth <= bin.breadth && p.z + c1.breadth >= 0) {                        cuboids.add(c1);
+                    frontface=c1.getFrontFace();
+                    if (frontface.intersects(backfaces) && flag6 && c1.contains1(fitCuboids) && c1.containsAllCornerPoints(fitCuboids) && !c1.intersects(fitCuboids) && p.x + c1.length <= bin.length && p.x + c1.length >= 0 && p.y + c1.height <= bin.height && p.y + c1.height >= 0 && p.z + c1.breadth <= bin.breadth && p.z + c1.breadth >= 0) {                        cuboids.add(c1);
                         cuboids.add(c1);
                         flag6=false;
                     }
                 } else {
-                   if (flag1 && !c1.intersects(fitCuboids) && p.x + c1.length <= bin.length && p.x + c1.length >= 0 && p.y + c1.height <= bin.height && p.y + c1.height >= 0 && p.z + c1.breadth <= bin.breadth && p.z + c1.breadth >= 0) {
+                   frontface=c1.getFrontFace();
+                   if (frontface.intersects(backfaces) && flag1 && !c1.intersects(fitCuboids) && p.x + c1.length <= bin.length && p.x + c1.length >= 0 && p.y + c1.height <= bin.height && p.y + c1.height >= 0 && p.z + c1.breadth <= bin.breadth && p.z + c1.breadth >= 0) {
                         cuboids.add(c1);
                         flag1=false;
                     }
                     c1=new Cuboid(c);
                     c1.rotateLengthBreadth();
                     c1.setBottomLeftRear(p);
-                    if (flag2 && !c1.intersects(fitCuboids) && p.x + c1.length <= bin.length && p.x + c1.length >= 0 && p.y + c1.height <= bin.height && p.y + c1.height >= 0 && p.z + c1.breadth <= bin.breadth && p.z + c1.breadth >= 0) {
+                    frontface=c1.getFrontFace();
+                    if (frontface.intersects(backfaces) && flag2 && !c1.intersects(fitCuboids) && p.x + c1.length <= bin.length && p.x + c1.length >= 0 && p.y + c1.height <= bin.height && p.y + c1.height >= 0 && p.z + c1.breadth <= bin.breadth && p.z + c1.breadth >= 0) {
                         cuboids.add(c1);
                         flag2=false;
                     }
                     c1=new Cuboid(c);
                     c1.rotateLengthHeight();
                     c1.setBottomLeftRear(p);
-                    if (flag3 && !c1.intersects(fitCuboids) && p.x + c1.length <= bin.length && p.x + c1.length >= 0 && p.y + c1.height <= bin.height && p.y + c1.height >= 0 && p.z + c1.breadth <= bin.breadth && p.z + c1.breadth >= 0) {
+                    frontface=c1.getFrontFace();
+                    if (frontface.intersects(backfaces) && flag3 && !c1.intersects(fitCuboids) && p.x + c1.length <= bin.length && p.x + c1.length >= 0 && p.y + c1.height <= bin.height && p.y + c1.height >= 0 && p.z + c1.breadth <= bin.breadth && p.z + c1.breadth >= 0) {
                         cuboids.add(c1);
                         flag3=false;
                     }
@@ -386,7 +411,8 @@ public class PackingAlgorithm {
                     c1.rotateLengthHeight();
                     c1.rotateLengthBreadth();
                     c1.setBottomLeftRear(p);
-                    if (flag4 && !c1.intersects(fitCuboids) && p.x + c1.length <= bin.length && p.x + c1.length >= 0 && p.y + c1.height <= bin.height && p.y + c1.height >= 0 && p.z + c1.breadth <= bin.breadth && p.z + c1.breadth >= 0) {
+                    frontface=c1.getFrontFace();
+                    if (frontface.intersects(backfaces) && flag4 && !c1.intersects(fitCuboids) && p.x + c1.length <= bin.length && p.x + c1.length >= 0 && p.y + c1.height <= bin.height && p.y + c1.height >= 0 && p.z + c1.breadth <= bin.breadth && p.z + c1.breadth >= 0) {
                         cuboids.add(c1);
                         flag4=false;
                     }
@@ -394,14 +420,16 @@ public class PackingAlgorithm {
                     c1.rotateHeightBreadth();
                     c1.rotateLengthBreadth();
                     c1.setBottomLeftRear(p);
-                    if (flag5 && !c1.intersects(fitCuboids) && p.x + c1.length <= bin.length && p.x + c1.length >= 0 && p.y + c1.height <= bin.height && p.y + c1.height >= 0 && p.z + c1.breadth <= bin.breadth && p.z + c1.breadth >= 0) {
+                    frontface=c1.getFrontFace();
+                    if (frontface.intersects(backfaces) && flag5 && !c1.intersects(fitCuboids) && p.x + c1.length <= bin.length && p.x + c1.length >= 0 && p.y + c1.height <= bin.height && p.y + c1.height >= 0 && p.z + c1.breadth <= bin.breadth && p.z + c1.breadth >= 0) {
                         cuboids.add(c1);
                         flag5=false;
                     }
                     c1=new Cuboid(c);
                     c1.rotateHeightBreadth();
                     c1.setBottomLeftRear(p);
-                    if (flag6 && !c1.intersects(fitCuboids) && p.x + c1.length <= bin.length && p.x + c1.length >= 0 && p.y + c1.height <= bin.height && p.y + c1.height >= 0 && p.z + c1.breadth <= bin.breadth && p.z + c1.breadth >= 0) {
+                    frontface=c1.getFrontFace();
+                        if (frontface.intersects(backfaces) && flag6 && !c1.intersects(fitCuboids) && p.x + c1.length <= bin.length && p.x + c1.length >= 0 && p.y + c1.height <= bin.height && p.y + c1.height >= 0 && p.z + c1.breadth <= bin.breadth && p.z + c1.breadth >= 0) {
                         cuboids.add(c1);
                         flag6=false;
                     }

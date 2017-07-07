@@ -14,7 +14,7 @@ public class Vehicle {
     static {
         try {
             Class.forName("org.postgresql.Driver");
-            connection = DriverManager.getConnection("jdbc:postgresql://localhost:5433/test", "postgres", "lguru");
+            connection = DriverManager.getConnection("jdbc:postgresql://localhost:5432/test", "postgres", "12345678");
         }
         catch(Exception e){
             System.out.println(e);

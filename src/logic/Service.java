@@ -14,21 +14,21 @@ import java.util.ArrayList;
  */
 public class Service {
 
-    public static ArrayList<Cuboid> getResult(String json ){
-//        json="{\"vehicleName\":\"Medium Truck\",\"orders\":[{\"orderId\":1,\"itemName\":\"TV\",\"itemQuantity\":\"2\"},{\"orderId\":2,\"itemName\":\"Fridge\",\"itemQuantity\":\"2\"},{\"orderId\":2,\"itemName\":\"Mobile\",\"itemQuantity\":\"3\"},{\"orderId\":3,\"itemName\":\"Washing Machine\",\"itemQuantity\":\"2\"}]}";
-        Gson gson=new Gson();
-        Orders orders=gson.fromJson(json,Orders.class);
-        System.out.println(orders);
-        Vehicle vehicle=Vehicle.getVehicle(orders.vehicleName);
-        Cuboid bin=new Cuboid(vehicle.length,vehicle.breadth,vehicle.height,vehicle.capacity);
-        PackingAlgorithm packing=new PackingAlgorithm();
-        ArrayList<Cuboid> cuboids=Item.getCuboids(orders.orders);
-        ArrayList<Cuboid> drawCuboids=packing.fitCuboids(bin.length,bin.breadth,bin.height, bin.weight,cuboids);
-//        System.out.println(cuboids);
-//        System.out.println(drawCuboids);
-//        RotationExample3D.runThis(drawCuboids);
-        return drawCuboids;
-    }
+//    public static ArrayList<Cuboid> getResult(String json ){
+////        json="{\"vehicleName\":\"Medium Truck\",\"orders\":[{\"orderId\":1,\"itemName\":\"TV\",\"itemQuantity\":\"2\"},{\"orderId\":2,\"itemName\":\"Fridge\",\"itemQuantity\":\"2\"},{\"orderId\":2,\"itemName\":\"Mobile\",\"itemQuantity\":\"3\"},{\"orderId\":3,\"itemName\":\"Washing Machine\",\"itemQuantity\":\"2\"}]}";
+//        Gson gson=new Gson();
+//        Orders orders=gson.fromJson(json,Orders.class);
+//        System.out.println(orders);
+//        Vehicle vehicle=Vehicle.getVehicle(orders.vehicleName);
+//        Cuboid bin=new Cuboid(vehicle.length,vehicle.breadth,vehicle.height,vehicle.capacity);
+//        PackingAlgorithm packing=new PackingAlgorithm();
+//        ArrayList<Cuboid> cuboids=Item.getCuboids(orders.orders);
+////        ArrayList<Cuboid> drawCuboids=packing.fitCuboids(bin.length,bin.breadth,bin.height, bin.weight,cuboids);
+////        System.out.println(cuboids);
+////        System.out.println(drawCuboids);
+////        RotationExample3D.runThis(drawCuboids);
+//        return drawCuboids;
+//    }
     
     public static ArrayList<Cuboid> getCuboids(Vehicle v, ArrayList<Item> items){
         ArrayList<Cuboid> cuboids=new ArrayList<>();
@@ -47,7 +47,7 @@ public class Service {
 
 
     public static void main(String[] args) {
-        getResult(null);
+//        getResult(null);
 //        String json="{\"vehicleName\":\"Medium Truck\",\"orders\":[{\"orderId\":1,\"itemName\":\"TV\",\"itemQuantity\":\"2\"},{\"orderId\":2,\"itemName\":\"Fridge\",\"itemQuantity\":\"2\"},{\"orderId\":2,\"itemName\":\"Mobile\",\"itemQuantity\":\"3\"},{\"orderId\":3,\"itemName\":\"Washing Machine\",\"itemQuantity\":\"2\"}]}";
 //        Gson gson=new Gson();
 //        Orders orders=gson.fromJson(json,Orders.class);

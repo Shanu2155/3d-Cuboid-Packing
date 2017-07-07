@@ -199,7 +199,31 @@ public class Cuboid {
         }
         return intersects;
     }
-
+    
+    public boolean intersectsFragile(ArrayList<Cuboid> cuboids){
+        Rectangle bottomFace = new Rectangle(new Point2D(this.bottomLeftRear.x, this.bottomLeftRear.z), this.length, this.breadth);
+        boolean b=false;
+        for(Cuboid c:cuboids){
+            Rectangle topFace =  new Rectangle(new Point2D(this.topLeftRear.x, this.topLeftRear.z), this.length, this.breadth);
+            if(bottomFace.intersects(topFace) && this.bottomLeftRear.y > c.topLeftRear.y){
+                b=true;
+                break;
+            }
+        }
+        return b;
+    }
+   
+    public boolean orderSort(ArrayList<Cuboid> cuboids){
+        boolean orderval=false;
+        for(Cuboid c:cuboids){
+            if(this.id>c.id && this.bottomLeftFront.z<c.bottomLeftRear.z){
+                orderval=true;
+                break;
+            }
+        }
+        return orderval;
+    }
+    
     public boolean containsAllCornerPoints(ArrayList<Cuboid> fitCuboids){
         boolean contains=false;
         double a=0,b=0,c=0,d=0;
@@ -276,6 +300,11 @@ public class Cuboid {
         this.breadth=temp;
     }
 
+    
+    public Rectangle getFrontFace(){
+        Rectangle frontface=new Rectangle(new Point2D(this.topLeftFront.x,this.topLeftFront.y), length, height);
+        return frontface;
+    }
     public static void main(String[] args) {
         Cuboid c1=new Cuboid(5,5,5,5);
         Cuboid c2=new Cuboid(5,5,5,5);

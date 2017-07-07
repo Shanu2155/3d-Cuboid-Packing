@@ -75,6 +75,7 @@ public class Rectangle {
         }
         return intersects;
     }
+    
     public boolean contains(Point p){
         java.awt.Rectangle rectangle=new java.awt.Rectangle((int)this.topLeft.x,(int)this.topLeft.y,(int)this.length,(int)this.breadth);
         return rectangle.contains(p.x,p.z);
